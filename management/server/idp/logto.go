@@ -49,13 +49,34 @@ type LogtoCredentials struct {
 
 // logtoProfile represents a logto user profile response.
 type logtoProfile struct {
-	ID           string `json:"id"`
-	Username     string `json:"username"`
-	PrimaryEmail string `json:"primaryEmail"`
-	Name         string `json:"name"`
-	Avatar       string `json:"avatar,omitempty"`
-	CreatedAt    string `json:"createdAt,omitempty"`
-	UpdatedAt    string `json:"updatedAt,omitempty"`
+	ID           string       `json:"id"`
+	Username     string       `json:"username"`
+	PrimaryEmail string       `json:"primaryEmail"`
+	PrimaryPhone string       `json:"primaryPhone,omitempty"`
+	Name         string       `json:"name"`
+	Avatar       string       `json:"avatar,omitempty"`
+	CustomData   interface{}  `json:"customData,omitempty"`
+	Profile      logtoUserProfile `json:"profile,omitempty"`
+	CreatedAt    float64      `json:"createdAt,omitempty"`
+	UpdatedAt    float64      `json:"updatedAt,omitempty"`
+	LastSignInAt float64      `json:"lastSignInAt,omitempty"`
+	IsSuspended  bool         `json:"isSuspended,omitempty"`
+	HasPassword  bool         `json:"hasPassword,omitempty"`
+}
+
+// logtoUserProfile represents the nested profile object in LogTo user.
+type logtoUserProfile struct {
+	FamilyName        string `json:"familyName,omitempty"`
+	GivenName         string `json:"givenName,omitempty"`
+	MiddleName        string `json:"middleName,omitempty"`
+	Nickname          string `json:"nickname,omitempty"`
+	PreferredUsername string `json:"preferredUsername,omitempty"`
+	Profile           string `json:"profile,omitempty"`
+	Website           string `json:"website,omitempty"`
+	Gender            string `json:"gender,omitempty"`
+	Birthdate         string `json:"birthdate,omitempty"`
+	Zoneinfo          string `json:"zoneinfo,omitempty"`
+	Locale            string `json:"locale,omitempty"`
 }
 
 // NewLogtoManager creates a new instance of the LogtoManager.
@@ -220,10 +241,60 @@ func (lc *LogtoCredentials) Authenticate(ctx context.Context) (JWTToken, error) 
 	return lc.jwtToken, nil
 }
 
-// CreateUser creates a new user in logto Idp and sends an invite.
-// Note: User creation may not be supported by LogTo Management API.
-func (lm *LogtoManager) CreateUser(_ context.Context, _, _, _, _ string) (*UserData, error) {
-	return nil, fmt.Errorf("method CreateUser not implemented for LogTo")
+// CreateUser creates a new user in logto Idp.
+func (lm *LogtoManager) CreateUser(ctx context.Context, email, name, accountID, invitedByEmail string) (*UserData, error) {
+	// Split name into first and last name
+	firstLast := strings.SplitN(name, " ", 2)
+	givenName := firstLast[0]
+	familyName := givenName
+	if len(firstLast) > 1 {
+		familyName = firstLast[1]
+	}
+
+	// LogTo user creation payload - using profile structure with givenName and familyName
+	createUser := map[string]any{
+		"primaryEmail": email,
+		"name":         name,
+		"username":     email, // Use email as username
+		"profile": map[string]string{
+			"givenName":  givenName,
+			"familyName": familyName,
+		},
+	}
+
+	payload, err := lm.helper.Marshal(createUser)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := lm.post(ctx, "users", string(payload))
+	if err != nil {
+		return nil, err
+	}
+
+	if lm.appMetrics != nil {
+		lm.appMetrics.IDPMetrics().CountCreateUser()
+	}
+
+	var newUser logtoProfile
+	err = lm.helper.Unmarshal(body, &newUser)
+	if err != nil {
+		return nil, err
+	}
+
+	var pending bool = true
+	ret := &UserData{
+		Email: email,
+		Name:  name,
+		ID:    newUser.ID,
+		AppMetadata: AppMetadata{
+			WTAccountID:     accountID,
+			WTPendingInvite: &pending,
+			WTInvitedBy:     invitedByEmail,
+		},
+	}
+
+	return ret, nil
 }
 
 // GetUserByEmail searches users with a given email.
@@ -463,11 +534,62 @@ func (lm *LogtoManager) get(ctx context.Context, resource string, q url.Values) 
 	return io.ReadAll(resp.Body)
 }
 
+// post perform Post requests.
+func (lm *LogtoManager) post(ctx context.Context, resource string, body string) ([]byte, error) {
+	jwtToken, err := lm.credentials.Authenticate(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	reqURL := fmt.Sprintf("%s/%s", lm.managementEndpoint, resource)
+	req, err := http.NewRequest(http.MethodPost, reqURL, strings.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("authorization", "Bearer "+jwtToken.AccessToken)
+	req.Header.Add("content-type", "application/json")
+
+	resp, err := lm.httpClient.Do(req)
+	if err != nil {
+		if lm.appMetrics != nil {
+			lm.appMetrics.IDPMetrics().CountRequestError()
+		}
+
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		if lm.appMetrics != nil {
+			lm.appMetrics.IDPMetrics().CountRequestStatusError()
+		}
+
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("unable to post %s, statusCode %d, response: %s", reqURL, resp.StatusCode, string(bodyBytes))
+	}
+
+	return io.ReadAll(resp.Body)
+}
+
 // userData construct user data from logto profile.
 func (lp logtoProfile) userData() *UserData {
+	// Use name field if available, otherwise construct from profile
+	displayName := lp.Name
+	if displayName == "" && lp.Profile.GivenName != "" {
+		if lp.Profile.FamilyName != "" {
+			displayName = lp.Profile.GivenName + " " + lp.Profile.FamilyName
+		} else {
+			displayName = lp.Profile.GivenName
+		}
+	}
+	// Fallback to username if name is still empty
+	if displayName == "" {
+		displayName = lp.Username
+	}
+
 	return &UserData{
 		Email: lp.PrimaryEmail,
-		Name:  lp.Name,
+		Name:  displayName,
 		ID:    lp.ID,
 	}
 }

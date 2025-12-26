@@ -84,6 +84,17 @@ NETBIRD_IDP_MGMT_EXTRA_TENANT_ID="your-tenant-id"  # or "default" for OSS
 ### ✅ Fully Implemented
 
 - **Authentication**: Client credentials flow with Basic auth
+- **CreateUser**: Create new user via `POST /api/users` (per [OpenAPI documentation](https://openapi.logto.io/group/endpoint-users))
+- **GetUserByEmail**: Search users by email with exact match
+- **GetUserDataByID**: Retrieve user by ID
+- **GetAccount**: Get all users for an account
+- **GetAllAccounts**: Get all users indexed by account ID
+- **DeleteUser**: Delete user by ID
+- **Pagination**: Support for paginated user listing
+
+### ✅ Fully Implemented (Updated)
+
+- **CreateUser**: ✅ Implemented - Creates user via `POST /api/users` endpoint
 - **GetUserByEmail**: Search users by email with exact match
 - **GetUserDataByID**: Retrieve user by ID
 - **GetAccount**: Get all users for an account
@@ -93,7 +104,6 @@ NETBIRD_IDP_MGMT_EXTRA_TENANT_ID="your-tenant-id"  # or "default" for OSS
 
 ### ⚠️ Not Implemented (Not Supported by LogTo)
 
-- **CreateUser**: Returns error - LogTo may not support programmatic user creation
 - **InviteUserByID**: Returns error - LogTo may not support invitation resend
 - **UpdateUserAppMetadata**: No-op - LogTo may not support custom app metadata
 
