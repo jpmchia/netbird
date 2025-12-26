@@ -49,19 +49,19 @@ type LogtoCredentials struct {
 
 // logtoProfile represents a logto user profile response.
 type logtoProfile struct {
-	ID           string       `json:"id"`
-	Username     string       `json:"username"`
-	PrimaryEmail string       `json:"primaryEmail"`
-	PrimaryPhone string       `json:"primaryPhone,omitempty"`
-	Name         string       `json:"name"`
-	Avatar       string       `json:"avatar,omitempty"`
-	CustomData   interface{}  `json:"customData,omitempty"`
+	ID           string           `json:"id"`
+	Username     string           `json:"username"`
+	PrimaryEmail string           `json:"primaryEmail"`
+	PrimaryPhone string           `json:"primaryPhone,omitempty"`
+	Name         string           `json:"name"`
+	Avatar       string           `json:"avatar,omitempty"`
+	CustomData   interface{}      `json:"customData,omitempty"`
 	Profile      logtoUserProfile `json:"profile,omitempty"`
-	CreatedAt    float64      `json:"createdAt,omitempty"`
-	UpdatedAt    float64      `json:"updatedAt,omitempty"`
-	LastSignInAt float64      `json:"lastSignInAt,omitempty"`
-	IsSuspended  bool         `json:"isSuspended,omitempty"`
-	HasPassword  bool         `json:"hasPassword,omitempty"`
+	CreatedAt    float64          `json:"createdAt,omitempty"`
+	UpdatedAt    float64          `json:"updatedAt,omitempty"`
+	LastSignInAt float64          `json:"lastSignInAt,omitempty"`
+	IsSuspended  bool             `json:"isSuspended,omitempty"`
+	HasPassword  bool             `json:"hasPassword,omitempty"`
 }
 
 // logtoUserProfile represents the nested profile object in LogTo user.
@@ -474,19 +474,29 @@ func (lm *LogtoManager) fetchAllUserProfiles(ctx context.Context) ([]logtoProfil
 			return nil, err
 		}
 
+		// LogTo returns paginated response, check if it's wrapped in a data field
 		var response struct {
 			Data []logtoProfile `json:"data"`
 		}
 		err = lm.helper.Unmarshal(body, &response)
 		if err != nil {
-			return nil, err
-		}
-
-		profiles = append(profiles, response.Data...)
-
-		// Check if more pages exist
-		if len(response.Data) < pageSize {
-			break
+			// Try direct array format
+			pageProfiles := make([]logtoProfile, 0)
+			err2 := lm.helper.Unmarshal(body, &pageProfiles)
+			if err2 != nil {
+				return nil, fmt.Errorf("failed to parse logto user response: %w", err)
+			}
+			profiles = append(profiles, pageProfiles...)
+			// Check if more pages exist
+			if len(pageProfiles) < pageSize {
+				break
+			}
+		} else {
+			profiles = append(profiles, response.Data...)
+			// Check if more pages exist
+			if len(response.Data) < pageSize {
+				break
+			}
 		}
 		page++
 	}
@@ -593,4 +603,3 @@ func (lp logtoProfile) userData() *UserData {
 		ID:    lp.ID,
 	}
 }
-

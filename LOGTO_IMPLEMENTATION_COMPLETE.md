@@ -173,12 +173,30 @@ go test -v -run TestLogto
 - [x] Includes error handling
 - [x] Integrates with telemetry/metrics
 
+## Important Configuration Notes
+
+### Redirect URI Limitation
+
+⚠️ **LogTo does NOT support URI fragments** (the `#` part) in redirect URIs.
+
+**For NetBird Dashboard:**
+- Default redirect URIs use fragments: `/#callback`, `/#silent-callback`
+- **Must override** with path-based alternatives: `/callback`, `/silent-callback`
+- Set via environment variables: `AUTH_REDIRECT_URI="/callback"` and `AUTH_SILENT_REDIRECT_URI="/silent-callback"`
+
+**For NetBird Client (PKCE Flow):**
+- Uses localhost redirects: `http://localhost:53000`
+- These work fine with LogTo (no fragments)
+
+See `LOGTO_OIDC_FLOWS_CONFIGURATION.md` for detailed configuration instructions.
+
 ## Next Steps
 
 1. **Testing**: Test against a real LogTo instance
 2. **Verification**: Verify user profile structure matches actual API response
 3. **Documentation**: Update user-facing documentation with LogTo setup guide
 4. **Integration**: Test end-to-end integration with NetBird
+5. **Dashboard Configuration**: Ensure dashboard redirect URIs are configured correctly (no fragments)
 
 ## References
 

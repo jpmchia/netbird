@@ -169,6 +169,11 @@ fi
 
 if [ "$NETBIRD_TOKEN_SOURCE" = "idToken" ]; then
     export NETBIRD_AUTH_PKCE_USE_ID_TOKEN=true
+    # When using ID tokens, they typically have the client ID as audience
+    # So we need to add the client ID as an extra audience for validation
+    export NETBIRD_MGMT_EXTRA_AUTH_AUDIENCE="$NETBIRD_AUTH_CLIENT_ID"
+else
+    export NETBIRD_MGMT_EXTRA_AUTH_AUDIENCE=""
 fi
 
 # Check if letsencrypt was disabled

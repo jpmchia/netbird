@@ -43,7 +43,7 @@ echo ""
 # Build Management
 echo -e "${GREEN}[1/5] Building Management service...${NC}"
 cd management
-go build -o netbird-mgmt .
+CGO_ENABLED=1 go build -o netbird-mgmt .
 cd ..
 cp management/netbird-mgmt ./netbird-mgmt || {
   echo -e "${RED}Failed to copy management binary${NC}"

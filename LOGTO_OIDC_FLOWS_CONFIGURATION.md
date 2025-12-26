@@ -214,6 +214,41 @@ overriding PKCEAuthorizationFlow.AuthorizationEndpoint with a new value
 - Add `http://localhost:53000` to LogTo app redirect URIs
 - Check port availability
 
+## Dashboard Redirect URI Configuration
+
+⚠️ **Important**: LogTo does **NOT support URI fragments** (the `#` part) in redirect URIs.
+
+### For NetBird Dashboard
+
+When configuring the NetBird Dashboard to use LogTo, you **must** override the default fragment-based redirect URIs:
+
+```bash
+# Dashboard environment variables (in docker-compose or setup.env)
+AUTH_REDIRECT_URI="/callback"  # ⚠️ Must NOT use /#callback
+AUTH_SILENT_REDIRECT_URI="/silent-callback"  # ⚠️ Must NOT use /#silent-callback
+```
+
+**Also configure these same redirect URIs in LogTo Console:**
+1. Go to your Traditional Web Application in LogTo
+2. Add redirect URIs: 
+   - `https://your-dashboard-domain.com/callback`
+   - `https://your-dashboard-domain.com/silent-callback`
+3. Ensure they match exactly (including protocol and domain)
+
+**Note**: The dashboard defaults to `/#callback` and `/#silent-callback` (fragment-based), which LogTo does not support. You must override these with path-based alternatives (`/callback` and `/silent-callback`).
+
+### For NetBird Client (PKCE Flow)
+
+The NetBird client uses localhost redirects for PKCE flow, which work fine with LogTo:
+
+```bash
+# Client PKCE redirect URIs (configured in LogTo Console)
+http://localhost:53000
+http://localhost:54000  # Alternative port
+```
+
+These are configured via `NETBIRD_AUTH_PKCE_REDIRECT_URL_PORTS` and don't use fragments, so they work with LogTo.
+
 ## Summary
 
 **What I've Implemented**:
@@ -228,7 +263,9 @@ overriding PKCEAuthorizationFlow.AuthorizationEndpoint with a new value
 **What You Need to Configure**:
 1. Set `NETBIRD_AUTH_OIDC_CONFIGURATION_ENDPOINT` to LogTo's OIDC config endpoint
 2. Create user-facing application in LogTo
-3. Configure redirect URIs
+3. Configure redirect URIs:
+   - **Client PKCE**: `http://localhost:53000` (works as-is)
+   - **Dashboard**: `/callback` and `/silent-callback` (must override defaults, no fragments)
 4. Set client ID and secret for user authentication
 
 The OIDC flows are **already functional** - they just need proper configuration!

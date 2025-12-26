@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	geolocationDisabledKey = "NB_DISABLE_GEOLOCATION"
+	geolocationDisabledKey = "NETBIRD_DISABLE_GEOLOCATION"
 )
 
 func (s *BaseServer) GeoLocationManager() geolocation.Geolocation {

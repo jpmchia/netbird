@@ -30,7 +30,7 @@ The Dockerfiles expect pre-built binaries. You need to:
 ```bash
 # Build the binary
 cd management
-go build -o netbird-mgmt .
+CGO_ENABLED=1 go build -o netbird-mgmt .
 
 # Build the Docker image
 cd ..
@@ -129,7 +129,7 @@ echo -e "${BLUE}Building NetBird Docker images...${NC}"
 # Build Management
 echo -e "${GREEN}Building Management service...${NC}"
 cd management
-go build -o netbird-mgmt .
+CGO_ENABLED=1 go build -o netbird-mgmt .
 cd ..
 docker build -f management/Dockerfile -t netbirdio/management:local \
   --build-arg NETBIRD_BINARY=netbird-mgmt . || true
