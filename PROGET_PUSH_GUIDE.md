@@ -78,7 +78,19 @@ docker push proget.terra-net.io/images/netbirdio/upload-server:latest
 
 ## Using ProGet Images
 
-### Update docker-compose.yml
+### Option 1: Use the ProGet Template (Recommended)
+
+A ProGet-specific template is available at `infrastructure_files/docker-compose.yml.tmpl.proget`. To use it:
+
+```bash
+cd infrastructure_files
+# Copy the ProGet template as the main template
+cp docker-compose.yml.tmpl.proget docker-compose.yml.tmpl
+# Run configure.sh as usual
+./configure.sh
+```
+
+### Option 2: Manually Update docker-compose.yml.tmpl
 
 Edit `infrastructure_files/docker-compose.yml.tmpl`:
 
@@ -90,6 +102,8 @@ services:
     image: proget.terra-net.io/images/netbirdio/signal:${NETBIRD_SIGNAL_TAG}
   relay:
     image: proget.terra-net.io/images/netbirdio/relay:${NETBIRD_RELAY_TAG}
+  dashboard:
+    image: proget.terra-net.io/images/netbirdio/dashboard:${NETBIRD_DASHBOARD_TAG}
 ```
 
 ### Set Environment Variables
