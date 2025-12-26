@@ -45,6 +45,22 @@
 
 <br>
 
+> **⚠️ This is a Modified Fork**
+> 
+> This repository is a modified fork of the original [NetBird project](https://github.com/netbirdio/netbird). It includes the following enhancements:
+> - **LogTo Identity Provider Integration**: Full support for LogTo OSS as an identity provider (see [LogTo Implementation Guide](LOGTO_IMPLEMENTATION_COMPLETE.md))
+> - **ProGet Container Registry Support**: Build scripts and templates for pushing images to ProGet registry (see [ProGet Push Guide](PROGET_PUSH_GUIDE.md))
+> 
+> For the original NetBird project, please visit: https://github.com/netbirdio/netbird
+> 
+> **Key Differences:**
+> - Added LogTo IdP manager implementation (`management/server/idp/logto.go`)
+> - Added ProGet-specific Docker build and push scripts (`build-docker-images.sh`, `push-to-proget.sh`)
+> - Added ProGet docker-compose template (`infrastructure_files/docker-compose.yml.tmpl.proget`)
+> - Extended IdP configuration to support LogTo client credentials
+> 
+> All other functionality remains consistent with the upstream NetBird project.
+
 **NetBird combines a configuration-free peer-to-peer private network and a centralized access control system in a single platform, making it easy to create secure private networks for your organization or home.**
 
 **Connect.** NetBird creates a WireGuard-based overlay network that automatically connects your machines over an encrypted tunnel, leaving behind the hassle of opening ports, complex firewall rules, VPN gateways, and so forth.
@@ -64,7 +80,7 @@ https://github.com/user-attachments/assets/10cec749-bb56-4ab3-97af-4e38850108d2
 |----|----|----|----|----|
 | <ul><li>- \[x] Kernel WireGuard</ul></li> | <ul><li>- \[x] [Admin Web UI](https://github.com/netbirdio/dashboard)</ul></li> | <ul><li>- \[x] [SSO & MFA support](https://docs.netbird.io/how-to/installation#running-net-bird-with-sso-login)</ul></li> | <ul><li>- \[x] [Public API](https://docs.netbird.io/api)</ul></li> | <ul><li>- \[x] Linux</ul></li> |
 | <ul><li>- \[x] Peer-to-peer connections</ul></li> | <ul><li>- \[x] Auto peer discovery and configuration</ui></li> | <ul><li>- \[x] [Access control - groups & rules](https://docs.netbird.io/how-to/manage-network-access)</ui></li> | <ul><li>- \[x] [Setup keys for bulk network provisioning](https://docs.netbird.io/how-to/register-machines-using-setup-keys)</ui></li> | <ul><li>- \[x] Mac</ui></li> |
-| <ul><li>- \[x] Connection relay fallback</ui></li> | <ul><li>- \[x] [IdP integrations](https://docs.netbird.io/selfhosted/identity-providers)</ui></li> | <ul><li>- \[x] [Activity logging](https://docs.netbird.io/how-to/audit-events-logging)</ui></li> | <ul><li>- \[x] [Self-hosting quickstart script](https://docs.netbird.io/selfhosted/selfhosted-quickstart)</ui></li> | <ul><li>- \[x] Windows</ui></li> |
+| <ul><li>- \[x] Connection relay fallback</ui></li> | <ul><li>- \[x] [IdP integrations](https://docs.netbird.io/selfhosted/identity-providers) (Auth0, Azure, Keycloak, Zitadel, Authentik, **LogTo**)</ui></li> | <ul><li>- \[x] [Activity logging](https://docs.netbird.io/how-to/audit-events-logging)</ui></li> | <ul><li>- \[x] [Self-hosting quickstart script](https://docs.netbird.io/selfhosted/selfhosted-quickstart)</ui></li> | <ul><li>- \[x] Windows</ui></li> |
 | <ul><li>- \[x] [Routes to external networks](https://docs.netbird.io/how-to/routing-traffic-to-private-networks)</ui></li> | <ul><li>- \[x] [Private DNS](https://docs.netbird.io/how-to/manage-dns-in-your-network)</ui></li> | <ul><li>- \[x] [Device posture checks](https://docs.netbird.io/how-to/manage-posture-checks)</ui></li> | <ul><li>- \[x] IdP groups sync with JWT</ui></li> | <ul><li>- \[x] Android</ui></li> |
 | <ul><li>- \[x] NAT traversal with BPF</ui></li> | <ul><li>- \[x] [Multiuser support](https://docs.netbird.io/how-to/add-users-to-your-network)</ui></li> | <ul><li>- \[x] Peer-to-peer encryption</ui></li> || <ul><li>- \[x] iOS</ui></li> |
 ||| <ul><li>- \[x] [Quantum-resistance with Rosenpass](https://netbird.io/knowledge-hub/the-first-quantum-resistant-mesh-vpn)</ui></li> || <ul><li>- \[x] OpenWRT</ui></li> |
@@ -124,6 +140,20 @@ See a complete [architecture overview](https://docs.netbird.io/about-netbird/how
 
 **Note**: The `main` branch may be in an *unstable or even broken state* during development.
 For stable versions, see [releases](https://github.com/netbirdio/netbird/releases).
+
+### Building Docker Images
+
+This fork includes enhanced build scripts for creating Docker images and pushing them to ProGet registry:
+
+```bash
+# Build all NetBird components
+./build-docker-images.sh
+
+# Push to ProGet registry
+./push-to-proget.sh
+```
+
+See [BUILD_DOCKER_IMAGES.md](BUILD_DOCKER_IMAGES.md) and [PROGET_PUSH_GUIDE.md](PROGET_PUSH_GUIDE.md) for detailed instructions.
 
 ### Support acknowledgement
 
