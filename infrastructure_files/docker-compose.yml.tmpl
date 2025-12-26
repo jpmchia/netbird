@@ -8,9 +8,13 @@ x-default: &default
 
 services:
   # UI dashboard
+  # Note: Dashboard is a separate project. Use the original registry or pull/push to ProGet manually
+  # To push dashboard to ProGet, run: DASHBOARD_TAG=$NETBIRD_DASHBOARD_TAG ../pull-push-dashboard.sh
   dashboard:
     <<: *default
     image: netbirdio/dashboard:$NETBIRD_DASHBOARD_TAG
+    # Alternative: If you've pulled and pushed dashboard to ProGet, use:
+    # image: proget.terra-net.io/images/netbirdio/dashboard:$NETBIRD_DASHBOARD_TAG
     ports:
       - 80:80
       - 443:443
@@ -39,7 +43,7 @@ services:
   # Signal
   signal:
     <<: *default
-    image: netbirdio/signal:$NETBIRD_SIGNAL_TAG
+    image: proget.terra-net.io/images/netbirdio/signal:$NETBIRD_SIGNAL_TAG
     depends_on:
           - dashboard
     volumes:
@@ -59,7 +63,7 @@ services:
   # Relay
   relay:
     <<: *default
-    image: netbirdio/relay:$NETBIRD_RELAY_TAG
+    image: proget.terra-net.io/images/netbirdio/relay:$NETBIRD_RELAY_TAG
     environment:
     - NB_LOG_LEVEL=info
     - NB_LISTEN_ADDRESS=:$NETBIRD_RELAY_PORT
@@ -72,9 +76,12 @@ services:
   # Management
   management:
     <<: *default
-    image: netbirdio/management:$NETBIRD_MANAGEMENT_TAG
+    image: proget.terra-net.io/images/netbirdio/management:$NETBIRD_MANAGEMENT_TAG
     depends_on:
-      - dashboard
+      dashboard:
+        condition: service_started
+      postgres:
+        condition: service_healthy
     volumes:
       - $MGMT_VOLUMENAME:/var/lib/netbird
       - $LETSENCRYPT_VOLUMENAME:/etc/letsencrypt:ro
@@ -94,6 +101,24 @@ services:
     environment:
       - NETBIRD_STORE_ENGINE_POSTGRES_DSN=$NETBIRD_STORE_ENGINE_POSTGRES_DSN
       - NETBIRD_STORE_ENGINE_MYSQL_DSN=$NETBIRD_STORE_ENGINE_MYSQL_DSN
+
+  # PostgreSQL Database
+  postgres:
+    <<: *default
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=$POSTGRES_USER
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+      - POSTGRES_DB=$POSTGRES_DB
+    volumes:
+      - $POSTGRES_VOLUMENAME:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
       
   # Coturn
   coturn:
@@ -112,3 +137,5 @@ volumes:
   $MGMT_VOLUMENAME:
   $SIGNAL_VOLUMENAME:
   $LETSENCRYPT_VOLUMENAME:
+  $POSTGRES_VOLUMENAME:
+

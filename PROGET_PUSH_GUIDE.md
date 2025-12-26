@@ -135,6 +135,20 @@ Images will be pushed with the following names:
 - `proget.terra-net.io/images/netbirdio/netbird:<tag>`
 - `proget.terra-net.io/images/netbirdio/upload-server:<tag>`
 
+**Note:** The dashboard image (`netbirdio/dashboard`) is a separate project and is not built by our scripts. To use it from ProGet:
+
+```bash
+# Pull dashboard from Docker Hub and push to ProGet
+DASHBOARD_TAG=latest ./pull-push-dashboard.sh
+```
+
+Or manually:
+```bash
+docker pull netbirdio/dashboard:latest
+docker tag netbirdio/dashboard:latest proget.terra-net.io/images/netbirdio/dashboard:latest
+docker push proget.terra-net.io/images/netbirdio/dashboard:latest
+```
+
 ## Troubleshooting
 
 ### Authentication Failed
